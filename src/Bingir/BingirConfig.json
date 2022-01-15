@@ -1,0 +1,4 @@
+{
+  "CacheDirectory": "./imgCache",
+  "MaxCacheSize": 30
+}
