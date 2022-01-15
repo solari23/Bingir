@@ -20,8 +20,7 @@ public class Config
     /// <returns></returns>
     public static async Task<Config> LoadAsync()
     {
-        var bingirDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        var configFilePath = Path.Combine(bingirDir, ConfigFileName);
+        var configFilePath = Path.Combine(AppContext.BaseDirectory, ConfigFileName);
 
         var configText = await File.ReadAllTextAsync(configFilePath);
         return JsonSerializer.Deserialize<Config>(configText);

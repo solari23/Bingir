@@ -95,8 +95,8 @@ public class Program
             if (!options.Silent)
             {
                 Console.WriteLine(cached
-                ? $"Cached image {image.Id}"
-                : $"Image {image.Id} was already cached");
+                    ? $"Cached image {image.Id}"
+                    : $"Image {image.Id} was already cached");
             }
         }
     }
@@ -113,8 +113,14 @@ public class Program
         }
 
         var latestImage = this.ImageCache.GetLatestCachedImage();
-        var latestImagePath = this.ImageCache.MakeImageFilePath(latestImage);
 
+        if (latestImage is null)
+        {
+            throw new UserErrorException(
+                "There are no images in the cache. Use the 'fetch' command to get images from the Bing servers first.");
+        }
+
+        var latestImagePath = this.ImageCache.MakeImageFilePath(latestImage);
         Console.WriteLine(latestImagePath);
     }
 }
