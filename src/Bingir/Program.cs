@@ -105,17 +105,29 @@ public class Program
     {
         if (options.Fetch)
         {
-            await FetchAsync(new FetchVerbOptions
+            try
             {
-                Count = 1,
-                Silent = true,
-            });
+                await FetchAsync(new FetchVerbOptions
+                {
+                    Count = 1,
+                    Silent = true,
+                });
+            }
+            catch when (options.NoError)
+            {
+                // Swallow errors if no-error is set.
+            }
         }
 
         var latestImage = this.ImageCache.GetLatestCachedImage();
 
         if (latestImage is null)
         {
+            if (options.NoError)
+            {
+                return;
+            }
+
             throw new UserErrorException(
                 "There are no images in the cache. Use the 'fetch' command to get images from the Bing servers first.");
         }

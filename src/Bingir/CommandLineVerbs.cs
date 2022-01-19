@@ -34,5 +34,13 @@ public static class CommandLineVerbs
             HelpText = "Whether to fetch from Bing servers. If false, only the latest from cache will be returned.",
             Default = false)]
         public bool Fetch { get; set; }
+
+        [Option(
+            'x',
+            "no-error",
+            Required = false,
+            HelpText = "When set, suppresses errors that occur during processing this command.",
+            Default = false)]
+        public bool NoError { get; set; }
     }
 }
