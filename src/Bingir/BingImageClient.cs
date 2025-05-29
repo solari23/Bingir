@@ -12,7 +12,7 @@ public class BingImageClient : IDisposable
     /// The maximum number of images' metadata that will be fetched when
     /// calling <see cref="GetLastNImagesMetadataAsync(int)"/>.
     /// </summary>
-    public const int MaxImagesToFetch = 7;
+    public const int MaxImagesToFetch = 10;
 
     private HttpClient HttpClient { get; } = new HttpClient();
 
