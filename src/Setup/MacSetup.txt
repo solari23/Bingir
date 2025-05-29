@@ -1,0 +1,33 @@
+LaunchD
+File: ~/Library/LaunchAgents/com.bingir.setbackground.plist
+-----------------------------------------------------------
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.bingir.setbackground</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/FOO/Bingir/set_background.sh</string>
+  </array>
+
+  <key>StartInterval</key>
+  <integer>3600</integer>
+</dict>
+</plist>
+
+
+Shell Script
+File: set_background.sh
+-----------------------
+#!/bin/bash
+
+bgFile=`/Users/FOO/Bingir/Bingir latest -f`
+
+applescript="tell application \"System Events\" to tell every desktop to set picture to \"$gbFile\""
+
+osascript -e "$applescript"
