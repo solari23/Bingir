@@ -22,6 +22,14 @@ public static class CommandLineVerbs
             HelpText = "Suppresses output from this operation.",
             Default = false)]
         public bool Silent { get; set; }
+
+        [Option(
+            'd',
+            "add-descriptive-info",
+            Required = false,
+            HelpText = "Adds descriptive information text to the image.",
+            Default = false)]
+        public bool AddDescriptiveInfo { get; set; }
     }
 
     [Verb("latest", HelpText = "Returns the local filepath to the latest cached Bing image.")]

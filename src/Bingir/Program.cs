@@ -1,4 +1,5 @@
-﻿using CommandLine;
+﻿using Bingir.ImageMutation;
+using CommandLine;
 
 using static Bingir.CommandLineVerbs;
 
@@ -23,7 +24,7 @@ public class Program
         var program = new Program();
         try
         {
-            await (new Program()).RunAsync(args);
+            await program.RunAsync(args);
         }
         catch (UserErrorException e)
         {
@@ -85,12 +86,19 @@ public class Program
             throw new UserErrorException($"The number of images to fetch should be in the range [1-{BingImageClient.MaxImagesToFetch}].");
         }
 
-        using BingImageClient imageClient = new BingImageClient();
+        using BingImageClient imageClient = new();
         var latestImages = await imageClient.GetLastNImagesMetadataAsync(n: options.Count);
+
+        ImageMutationPipeline mutationPipeline = null;
+        if (options.AddDescriptiveInfo)
+        {
+            mutationPipeline = new ImageMutationPipeline(
+                new AddDescriptiveInfoMutation());
+        }
 
         foreach (var image in latestImages)
         {
-            bool cached = await this.ImageCache.DownloadAndCacheImageAsync(image, imageClient);
+            bool cached = await this.ImageCache.DownloadAndCacheImageAsync(image, imageClient, mutationPipeline);
 
             if (!options.Silent)
             {

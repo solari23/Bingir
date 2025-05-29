@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using Bingir.ImageMutation;
 
 namespace Bingir;
 
@@ -55,8 +56,12 @@ public class ImageCache
     /// </summary>
     /// <param name="image">The metadata for the image to download.</param>
     /// <param name="client">The client to use to download the image.</param>
+    /// <param name="mutationPipeline">Mutations to apply to the image (optional).</param>
     /// <returns>True if the image was added, false if the image was already in the cache.</returns>
-    public async Task<bool> DownloadAndCacheImageAsync(ImageMetadata image, BingImageClient client)
+    public async Task<bool> DownloadAndCacheImageAsync(
+        ImageMetadata image,
+        BingImageClient client,
+        ImageMutationPipeline mutationPipeline = null)
     {
         if (this.ContainsImage(image))
         {
@@ -70,8 +75,17 @@ public class ImageCache
         }
 
         // Now we can download and cache the image.
-        var imageFilePath = this.MakeImageFilePath(image);
-        await client.DownloadImageToAsync(image, imageFilePath);
+        var finalImageFilePath = this.MakeImageFilePath(image);
+        var downloadPath = mutationPipeline is not null
+            ? $"{finalImageFilePath}.tmp"
+            : finalImageFilePath;
+        await client.DownloadImageToAsync(image, downloadPath);
+
+        if (mutationPipeline is not null)
+        {
+            await mutationPipeline.RunAsync(downloadPath, image, finalImageFilePath);
+            File.Delete(downloadPath);
+        }
 
         this.CachedImages.Add(image);
         this.PersistCacheData();
