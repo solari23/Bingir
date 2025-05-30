@@ -89,16 +89,20 @@ public class Program
         using BingImageClient imageClient = new();
         var latestImages = await imageClient.GetLastNImagesMetadataAsync(n: options.Count);
 
-        ImageMutationPipeline mutationPipeline = null;
+        var cachingOptions = new ImageCachingOptions
+        {
+            ForceOverwrite = options.Force,
+        };
+
         if (options.AddDescriptiveInfo)
         {
-            mutationPipeline = new ImageMutationPipeline(
+            cachingOptions.Mutations = new ImageMutationPipeline(
                 new AddDescriptiveInfoMutation());
         }
 
         foreach (var image in latestImages)
         {
-            bool cached = await this.ImageCache.DownloadAndCacheImageAsync(image, imageClient, mutationPipeline);
+            bool cached = await this.ImageCache.DownloadAndCacheImageAsync(image, imageClient, cachingOptions);
 
             if (!options.Silent)
             {

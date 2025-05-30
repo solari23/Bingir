@@ -2,7 +2,7 @@
   "profiles": {
     "Bingir": {
       "commandName": "Project",
-      "commandLineArgs": "fetch -n 10 --add-descriptive-info"
+      "commandLineArgs": "fetch -n 14 --add-descriptive-info --force"
     }
   }
 }

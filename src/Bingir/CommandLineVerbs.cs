@@ -30,6 +30,14 @@ public static class CommandLineVerbs
             HelpText = "Adds descriptive information text to the image.",
             Default = false)]
         public bool AddDescriptiveInfo { get; set; }
+
+        [Option(
+            'f',
+            "force",
+            Required = false,
+            HelpText = "Forces re-download and re-cache of images.",
+            Default = false)]
+        public bool Force { get; set; }
     }
 
     [Verb("latest", HelpText = "Returns the local filepath to the latest cached Bing image.")]

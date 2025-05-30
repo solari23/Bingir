@@ -34,7 +34,19 @@ public class ImageMetadata
     public string Copyright { get; init; }
 
     /// <summary>
-    /// The original URI where the image was stored on Bing servers.
+    /// The URI where the HD (1920x1080) resolution image was stored on Bing servers.
     /// </summary>
-    public Uri OriginalUri { get; init; }
+    public Uri DefaultHDUri { get; init; }
+
+    /// <summary>
+    /// The base URI which can be appended to in order to select image resolution.
+    /// </summary>
+    /// <remarks>
+    /// Append "_{RESOLUTION}.jpg" to this URL to select the desired resoltion.
+    /// Some valid resolutions are:
+    ///   UHD
+    ///   1920x1200
+    ///   1920x1080     <- the default in DefaultHDUri
+    /// </remarks>
+    public Uri BaseUri { get; init; }
 }

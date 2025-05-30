@@ -56,14 +56,14 @@ public class ImageCache
     /// </summary>
     /// <param name="image">The metadata for the image to download.</param>
     /// <param name="client">The client to use to download the image.</param>
-    /// <param name="mutationPipeline">Mutations to apply to the image (optional).</param>
+    /// <param name="options">Options to apply when caching (optional).</param>
     /// <returns>True if the image was added, false if the image was already in the cache.</returns>
     public async Task<bool> DownloadAndCacheImageAsync(
         ImageMetadata image,
         BingImageClient client,
-        ImageMutationPipeline mutationPipeline = null)
+        ImageCachingOptions options = null)
     {
-        if (this.ContainsImage(image))
+        if (this.ContainsImage(image) && options?.ForceOverwrite != true)
         {
             return false;
         }
@@ -76,14 +76,14 @@ public class ImageCache
 
         // Now we can download and cache the image.
         var finalImageFilePath = this.MakeImageFilePath(image);
-        var downloadPath = mutationPipeline is not null
+        var downloadPath = options?.Mutations is not null
             ? $"{finalImageFilePath}.tmp"
             : finalImageFilePath;
         await client.DownloadImageToAsync(image, downloadPath);
 
-        if (mutationPipeline is not null)
+        if (options?.Mutations is not null)
         {
-            await mutationPipeline.RunAsync(downloadPath, image, finalImageFilePath);
+            await options.Mutations.RunAsync(downloadPath, image, finalImageFilePath);
             File.Delete(downloadPath);
         }
 

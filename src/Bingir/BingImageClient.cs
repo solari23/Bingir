@@ -11,8 +11,20 @@ public class BingImageClient : IDisposable
     /// <summary>
     /// The maximum number of images' metadata that will be fetched when
     /// calling <see cref="GetLastNImagesMetadataAsync(int)"/>.
+    ///
+    /// Bing will only return the last 14 days' worth of images, even
+    /// with indexed batching.
     /// </summary>
-    public const int MaxImagesToFetch = 10;
+    public const int MaxImagesToFetch = 14;
+
+    /// <summary>
+    /// The Bing API will only return at most 7 images' metadata in one call to
+    /// the HPImageArchive endpoint. It is possible to go further back into the
+    /// archive by setting an index value on the query string.
+    ///
+    /// This constant represents that limit and is used for batching.
+    /// </summary>
+    private const int ImageMetadataFetchBatchSize = 7;
 
     private HttpClient HttpClient { get; } = new HttpClient();
 
@@ -39,17 +51,30 @@ public class BingImageClient : IDisposable
             throw new ArgumentOutOfRangeException(nameof(n), $"The value of 'n' must be in the range [1-{MaxImagesToFetch}]");
         }
 
-        // URI to the Bing image-of-the-day metadata.
-        // The parameters specify to return the response as JSON, and that we want the latest n images for en-US market.
-        string bingMetadataUri = $"https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n={n}&mkt=en-US";
+        var bingResponseImageMetadata = new List<Image>();
+        var index = 0;
 
-        var response = await this.HttpClient.GetAsync(bingMetadataUri);
-        response.EnsureSuccessStatusCode();
+        while (n > 0)
+        {
+            var batchSize = Math.Min(ImageMetadataFetchBatchSize, n);
 
-        var responseContentStream = await response.Content.ReadAsStreamAsync();
-        var responseMetadata = JsonSerializer.Deserialize<BingImageMetadataResponse>(responseContentStream);
+            // URI to the Bing image-of-the-day metadata.
+            // The parameters specify to return the response as JSON, and that we want the latest n images for en-US market.
+            string bingMetadataUri = $"https://www.bing.com/HPImageArchive.aspx?format=js&idx={index}&n={batchSize}&mkt=en-US";
 
-        return responseMetadata.images
+            var response = await this.HttpClient.GetAsync(bingMetadataUri);
+            response.EnsureSuccessStatusCode();
+
+            var responseContentStream = await response.Content.ReadAsStreamAsync();
+            var responseMetadata = JsonSerializer.Deserialize<BingImageMetadataResponse>(responseContentStream);
+
+            bingResponseImageMetadata.AddRange(responseMetadata.images);
+
+            n -= batchSize;
+            index += batchSize;
+        }
+
+        return bingResponseImageMetadata
             .Select(m => m.ConvertToImageMetadata())
             .OrderBy(m => m.BingStartDate);
     }
@@ -64,7 +89,7 @@ public class BingImageClient : IDisposable
     {
         using var fileStream = File.OpenWrite(path);
 
-        using var imageStream = await this.HttpClient.GetStreamAsync(image.OriginalUri);
+        using var imageStream = await this.HttpClient.GetStreamAsync(image.DefaultHDUri);
         await imageStream.CopyToAsync(fileStream);
 
         imageStream.Close();
@@ -98,13 +123,24 @@ public class BingImageClient : IDisposable
 
         // Despite the name, this only contains the path and query string
         // to retrieve the image from host https://bing.com .
+        // This url requests a default 1920x1080 image.
         public string url { get; set; }
+
+        // Like 'url', this is only the path and query string.
+        // This version won't resolve, it needs to have a resolution selection
+        // appended to it.
+        // See doc comments on ImageMetadata.BaseUri for details.
+        public string urlbase { get; set; }
+
+        // Copyright info, also including a brief description of the image.
         public string copyright { get; set; }
+
+        // Image title given by the artist.
         public string title { get; set; }
 
         public ImageMetadata ConvertToImageMetadata()
         {
-            var imageUri = new Uri($"https://bing.com{this.url}");
+            var defaultHDImageUri = new Uri($"https://bing.com{this.url}");
 
             return new ImageMetadata
             {
@@ -116,10 +152,11 @@ public class BingImageClient : IDisposable
                         DateTimeStyles.None),
                     DateTimeKind.Utc),
                 DiscoverTime = DateTime.UtcNow,
-                Id = ExtractImageIdFromUri(imageUri),
+                Id = ExtractImageIdFromUri(defaultHDImageUri),
                 Title = this.title,
                 Copyright = this.copyright,
-                OriginalUri = imageUri,
+                DefaultHDUri = defaultHDImageUri,
+                BaseUri = new Uri($"https://bing.com{this.urlbase}"),
             };
         }
     }
